@@ -14,12 +14,13 @@ import re
 
 import aiohttp
 import discord
+from discord.ext import commands
 import colorlog
 
 from io import BytesIO, StringIO
 from functools import wraps
 from textwrap import dedent
-from datetime import timedelta
+from datetime import timedelta, datetime
 from collections import defaultdict
 
 from discord.enums import ChannelType
@@ -36,6 +37,7 @@ from .permissions import Permissions, PermissionsDefaults
 from .aliases import Aliases, AliasesDefault
 from .constructs import SkipState, Response
 from .utils import load_file, write_file, fixg, ftimedelta, _func_, _get_variable
+from discord.http import HTTPClient
 from .spotify import Spotify
 from .json import Json
 
@@ -48,7 +50,7 @@ log = logging.getLogger(__name__)
 
 
 class MusicBot(discord.Client):
-    def __init__(self, config_file=None, perms_file=None, aliases_file=None):
+    def __init__(self, *, loop=None, config_file=None, perms_file=None, aliases_file=None, **options):
         try:
             sys.stdout.write("\x1b]2;MusicBot {}\x07".format(BOTVERSION))
         except:
@@ -72,7 +74,6 @@ class MusicBot(discord.Client):
         self.last_status = None
 
         self.config = Config(config_file)
-        
         self._setup_logging()
         
         self.permissions = Permissions(perms_file, grant_all=[self.config.owner_id])
@@ -105,8 +106,10 @@ class MusicBot(discord.Client):
             'availability_paused': False
         }
         self.server_specific_data = defaultdict(ssd_defaults.copy)
-
-        super().__init__()
+        cprefix = self.config.command_prefix
+        intentsc = discord.Intents.default()
+        intentsc.members = True
+        super().__init__(command_prefix=cprefix, intents=intentsc)
         self.aiosession = aiohttp.ClientSession(loop=self.loop)
         self.http.user_agent += ' MusicBot/%s' % BOTVERSION
 
@@ -1112,9 +1115,9 @@ class MusicBot(discord.Client):
     def _gen_embed(self):
         """Provides a basic template for embeds"""
         e = discord.Embed()
-        e.colour = 7506394
-        e.set_footer(text='Just-Some-Bots/MusicBot ({})'.format(BOTVERSION), icon_url='https://i.imgur.com/gFHBoZA.png')
-        e.set_author(name=self.user.name, url='https://github.com/Just-Some-Bots/MusicBot', icon_url=self.user.avatar_url)
+        e.colour = 8290430
+        e.set_footer(text=f"© {datetime.now().year} Discord Clique")
+        e.set_author(name=self.user.name, icon_url=self.user.avatar_url)
         return e
 
     async def cmd_resetplaylist(self, player, channel):
