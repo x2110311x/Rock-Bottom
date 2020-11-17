@@ -21,6 +21,7 @@ from .lib.event_emitter import EventEmitter
 from .constructs import Serializable, Serializer
 from .exceptions import FFmpegError, FFmpegWarning
 from .entry import URLPlaylistEntry, StreamPlaylistEntry
+from .fm import FM
 
 log = logging.getLogger(__name__)
 
@@ -125,6 +126,7 @@ class MusicPlayer(EventEmitter, Serializable):
         self.state = MusicPlayerState.STOPPED
         self.skip_state = None
         self.karaoke_mode = False
+        self.fm = FM()
 
         self._volume = bot.config.default_volume
         self._play_lock = asyncio.Lock()
@@ -198,6 +200,11 @@ class MusicPlayer(EventEmitter, Serializable):
 
     def _playback_finished(self, error=None):
         entry = self._current_entry
+        try:
+            self.fm.scrobble(entry.title)
+        except Exception as e:
+            print(f"Could not scrobble - {e}")
+            
 
         if self._current_player:
             self._current_player.after = None
@@ -300,7 +307,7 @@ class MusicPlayer(EventEmitter, Serializable):
                             options=aoptions,
                             stderr=subprocess.PIPE
                         ),
-                        self.volume
+                        self.volume 
                     )
                 )
                 log.debug('Playing {0} using {1}'.format(self._source, self.voice_client))
@@ -311,6 +318,11 @@ class MusicPlayer(EventEmitter, Serializable):
                 # I need to add ytdl hooks
                 self.state = MusicPlayerState.PLAYING
                 self._current_entry = entry
+
+                try:
+                    self.fm.now_playing(entry.title)
+                except Exception as e:
+                    print(f"Could not scrobble - {e}")
 
                 self._stderr_future = asyncio.Future()
 
