@@ -1116,7 +1116,7 @@ class MusicBot(discord.Client):
         """Provides a basic template for embeds"""
         e = discord.Embed()
         e.colour = 8290430
-        e.set_footer(text=f"© {datetime.now().year} Discord Clique")
+        e.set_footer(text=f"© {datetime.now().year} Grandson Discord")
         e.set_author(name=self.user.name, icon_url=self.user.avatar_url)
         return e
 
